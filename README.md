@@ -1,21 +1,24 @@
-# Personal Finance Manager (CLI) - v1.0
+# Personal Finance Manager (CLI) - v1.1
 
-這是一個基於 Java 實作的指令列個人財務管理系統。本專案採用三層架構設計，練習了物件導向 (OOP)、檔案讀寫 (File I/O) 以及資料結構 (HashMap) 的應用。
+這是一個基於 Java 實作的指令列個人財務管理系統。
 
-## ✨ 主要功能
+## 🆕 v1.1 更新亮點
+- **進階搜尋與篩選**：引入 **Java Stream API**，支援關鍵字搜尋（如搜尋「飲食」）以及大額支出門檻篩選。
+- **UI 優化**：重新設計選單結構，提供更直觀的操作流程。
+
+## ✨ 核心功能
 - **記帳功能**：支援區分「收入」與「支出」，自動處理正負號。
 - **分類統計**：自動加總相同類別的收支，並顯示總餘額。
-- **資料持久化**：程式結束時自動存檔至 `.txt`，啟動時自動載入紀錄。
-- **錯誤處理**：針對非法輸入（如非數字金額）具備基本的防錯機制。
+- **資料持久化**：程式結束時自動透過 `FileHandler` 存檔至 `.txt`。
+- **健壯性**：具備基本的輸入防錯機制（如非數字金額檢查）。
 
-## 🏗️ 專案結構 (Architecture)
-- `Main (FinanceManager)`: 負責使用者介面與選單調度。
-- `Service (FinanceService)`: 處理統計與計算等核心商業邏輯。
-- `Data Access (FileHandler)`: 負責檔案讀取與寫入。
-- `Model (Transaction)`: 定義交易資料格式。
+## 🏗️ 專案架構 (N-Tier Architecture)
+- **FinanceManager**: 負責 UI 顯示與使用者互動。
+- **FinanceService**: 負責商業邏輯（計算、統計、Stream 篩選）。
+- **FileHandler**: 負責 Data Access（檔案 I/O）。
+- **Transaction**: 資料實體模型。
 
 ## 🚀 如何執行
 1. 確保已安裝 JDK 17+。
-2. 下載所有 `.java` 檔案至同一資料夾。
-3. 在終端機執行編譯：`javac FinanceManager.java`
-4. 執行程式：`java FinanceManager`
+2. 編譯：`javac FinanceManager.java`
+3. 執行：`java FinanceManager`
