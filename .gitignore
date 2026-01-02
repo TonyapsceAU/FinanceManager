@@ -1,3 +1,8 @@
+# 排除編譯後的 class 檔案
 *.class
-records.txt
-config.txt
+
+# 排除個人資料檔
+data.json
+
+# 排除 VS Code 個人設定
+.vscode/

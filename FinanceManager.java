@@ -5,15 +5,13 @@ import java.time.LocalDate;
 
 public class FinanceManager {
     private static FinanceService service = new FinanceService();
-    private static FileHandler fileHandler = new FileHandler("records.txt");
+    private static FileHandler fileHandler = new FileHandler();
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        // 1. 啟動時載入歷史紀錄
-        service.setHistory(fileHandler.load());
-
-        // 2. 啟動時載入持久化預算設定 (v1.3 新增)
-        service.setMonthlyBudget(fileHandler.loadBudget());
+        FinanceData data = fileHandler.loadAll();
+        service.setHistory(data.getHistory());
+        service.setMonthlyBudget(data.getMonthlyBudget());
 
         System.out.println("======================================");
         System.out.println("   個人財務管理系統 (FinanceManager)   ");
@@ -41,7 +39,7 @@ public class FinanceManager {
             } else if (choice.equals("5")) {
                 setBudget();
             } else if (choice.equals("6")) {
-                fileHandler.save(service.getHistory());
+                fileHandler.saveAll(service.getMonthlyBudget(), service.getHistory());
                 System.out.println("數據已安全存檔到 records.txt。");
                 System.out.println("感謝使用，再見！");
                 break;
@@ -52,7 +50,6 @@ public class FinanceManager {
     private static void setBudget() {
         double b = getValidDouble("請輸入本月預算上限: ");
         service.setMonthlyBudget(b);
-        fileHandler.saveBudget(b);
         System.out.println("預算已設定並儲存為: $" + b);
     }
 
