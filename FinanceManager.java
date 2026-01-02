@@ -1,3 +1,5 @@
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.time.LocalDate;
 
@@ -7,30 +9,42 @@ public class FinanceManager {
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
+        // 1. 啟動時載入歷史紀錄
         service.setHistory(fileHandler.load());
-        service.setMonthlyBudget(fileHandler.loadBudget());// 載入預算
-        System.out.println("系統已就緒，預算與紀錄載入完成。");
+
+        // 2. 啟動時載入持久化預算設定 (v1.3 新增)
+        service.setMonthlyBudget(fileHandler.loadBudget());
+
+        System.out.println("======================================");
+        System.out.println("   個人財務管理系統 (FinanceManager)   ");
+        System.out.println("         版本: v1.6 (穩健正式版)        ");
+        System.out.println("======================================");
+        System.out.println("系統已就緒，數據與預算載入完成。");
 
         while (true) {
-            System.out.println("\n--- 財務管理系統 v1.1 ---");
-            System.out.println("1. 記帳  2. 統計  3. 搜尋  4. 設定預算  5. 存檔離開");
-            System.out.print("請選擇: ");
-            String choice = scanner.nextLine();
+            System.out.println("\n--- 主功能選單 ---");
+            System.out.println("1. 記帳錄入      2. 分類統計報告");
+            System.out.println("3. 消費趨勢分析  4. 進階搜尋功能");
+            System.out.println("5. 設定月度預算  6. 存檔並離開系統");
+
+            // 使用 v1.4 的驗證工具確保輸入正確
+            String choice = getChoiceInRange("請選擇功能 (1-6): ", "1", "2", "3", "4", "5", "6");
 
             if (choice.equals("1")) {
-                addEntry();
+                addEntry(); // 內含水平類別選擇器 v1.5
             } else if (choice.equals("2")) {
                 showStats();
             } else if (choice.equals("3")) {
-                searchEntries();
+                showVisualStats(); // 趨勢圖 v1.6
             } else if (choice.equals("4")) {
-                setBudget();
+                searchEntries();
             } else if (choice.equals("5")) {
+                setBudget();
+            } else if (choice.equals("6")) {
                 fileHandler.save(service.getHistory());
-                System.out.println("數據已安全存檔，再見！");
+                System.out.println("數據已安全存檔到 records.txt。");
+                System.out.println("感謝使用，再見！");
                 break;
-            } else {
-                System.out.println("無效選擇，請輸入 1-4 之間的數字。");
             }
         }
     }
@@ -47,7 +61,8 @@ public class FinanceManager {
         String typeChoice = getChoiceInRange("請選擇類型 支出(1) 收入(2): ", "1", "2");
         String type = typeChoice.equals("2") ? "收入" : "支出";
 
-        String cat = getNonEmptyInput("輸入類別 : ");
+        String cat = getCategoryFromHistory();
+
         double amt = getValidDouble("輸入金額: ");
 
         String now = LocalDate.now().toString();
@@ -80,7 +95,7 @@ public class FinanceManager {
 
         if (subChoice.equals("1")) {
             // 確保關鍵字不為空
-            String keyword = getNonEmptyInput("請輸入類別關鍵字: ");
+            String keyword = getCategoryFromHistory();
             var results = service.searchByCategory(keyword);
 
             if (results.isEmpty()) {
@@ -135,6 +150,65 @@ public class FinanceManager {
             }
             System.out.println("❌ 錯誤：請輸入有效的選項 (" + String.join("/", validChoices) + ")。");
         }
+    }
+
+    private static String getCategoryFromHistory() {
+        // 從 Service 取得目前所有不重複的類別
+        List<String> existingCategories = service.getHistory().stream()
+                .map(Transaction::getCategory)
+                .distinct()
+                .toList();
+
+        if (existingCategories.isEmpty()) {
+            return getNonEmptyInput("尚未有現成類別，請輸入新類別: ");
+        }
+
+        System.out.println("\n現有類別:");
+        // 水平顯示邏輯
+        for (int i = 0; i < existingCategories.size(); i++) {
+            System.out.print("[" + (i + 1) + "] " + existingCategories.get(i) + "   ");
+            // 每顯示 4 個類別自動換行，避免太長超出螢幕
+            if ((i + 1) % 4 == 0)
+                System.out.println();
+        }
+
+        // 如果最後一行沒換行，補一個換行
+        if (existingCategories.size() % 4 != 0)
+            System.out.println();
+
+        System.out.println("[0] 輸入新類別");
+        System.out.println("----------------");
+
+        while (true) {
+            System.out.print("請選擇編號或輸入 0: ");
+            try {
+                int choice = Integer.parseInt(scanner.nextLine());
+                if (choice > 0 && choice <= existingCategories.size()) {
+                    return existingCategories.get(choice - 1);
+                } else if (choice == 0) {
+                    return getNonEmptyInput("請輸入新類別名稱: ");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("❌ 錯誤：請輸入有效的數字。");
+            }
+        }
+    }
+
+    private static void showVisualStats() {
+        System.out.println("\n--- 支出趨勢分析 ---");
+        Map<String, Double> percentages = service.getCategoryPercentages();
+
+        if (percentages.isEmpty()) {
+            System.out.println("尚無支出紀錄可供分析。");
+            return;
+        }
+
+        percentages.forEach((cat, percent) -> {
+            int barLength = (int) (percent / 2); // 每 2% 顯示一個區塊
+            String bar = "■".repeat(barLength);
+            System.out.printf("%-10s | %-25s %.1f%%%n", cat, bar, percent);
+        });
+        System.out.println("--------------------------------");
     }
 
 }

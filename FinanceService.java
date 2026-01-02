@@ -81,4 +81,21 @@ public class FinanceService {
                 .filter(t -> Math.abs(t.getAmount()) >= threshold) // 絕對值大於門檻
                 .collect(java.util.stream.Collectors.toList());
     }
+
+    // 計算各類別支出佔總支出的比例
+    public Map<String, Double> getCategoryPercentages() {
+        double totalExpense = Math.abs(getTotalExpense());
+        if (totalExpense == 0)
+            return new HashMap<>();
+
+        Map<String, Double> stats = getCategoryStats();
+        Map<String, Double> percentages = new HashMap<>();
+
+        stats.forEach((cat, amt) -> {
+            if (amt < 0) { // 只計算支出
+                percentages.put(cat, (Math.abs(amt) / totalExpense) * 100);
+            }
+        });
+        return percentages;
+    }
 }
