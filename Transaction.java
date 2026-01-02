@@ -2,12 +2,14 @@ public class Transaction {
     private String category;
     private double amount;
     private String type; // "收入" 或 "支出"
+    private String date;
 
-    public Transaction(String category, double amount, String type) {
+    public Transaction(String category, double amount, String type, String date) {
         this.category = category;
         this.type = type;
         // 如果是支出，自動將金額轉為負數
         this.amount = type.equals("支出") ? -Math.abs(amount) : Math.abs(amount);
+        this.date = date;
     }
 
     public String getCategory() {
@@ -22,9 +24,13 @@ public class Transaction {
         return type;
     }
 
+    public String getDate() {
+        return date;
+    }
+
     @Override
     public String toString() {
         // 存檔時多存一個類型欄位
-        return category + "," + amount + "," + type;
+        return category + "," + amount + "," + type + "," + date;
     }
 }
