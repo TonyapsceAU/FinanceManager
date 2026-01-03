@@ -1,6 +1,14 @@
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+
 import java.time.LocalDate;
 
 public class FinanceManager {
@@ -149,44 +157,44 @@ public class FinanceManager {
         }
     }
 
-    private static String getCategoryFromHistory() {
-        // 從 Service 取得目前所有不重複的類別
-        List<String> existingCategories = service.getHistory().stream()
-                .map(Transaction::getCategory)
-                .distinct()
-                .toList();
+    private void showAddDialog() {
+        // 建立一個小面板來放置輸入元件
+        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
 
-        if (existingCategories.isEmpty()) {
-            return getNonEmptyInput("尚未有現成類別，請輸入新類別: ");
-        }
+        // 取得現有類別作為選單
+        List<String> categories = service.getHistory().stream()
+                .map(Transaction::getCategory).distinct().collect(Collectors.toList());
+        categories.add("輸入新類別...");
 
-        System.out.println("\n現有類別:");
-        // 水平顯示邏輯
-        for (int i = 0; i < existingCategories.size(); i++) {
-            System.out.print("[" + (i + 1) + "] " + existingCategories.get(i) + "   ");
-            // 每顯示 4 個類別自動換行，避免太長超出螢幕
-            if ((i + 1) % 4 == 0)
-                System.out.println();
-        }
+        JComboBox<String> catCombo = new JComboBox<>(categories.toArray(new String[0]));
+        JTextField amtField = new JTextField();
+        JComboBox<String> typeCombo = new JComboBox<>(new String[] { "支出", "收入" });
 
-        // 如果最後一行沒換行，補一個換行
-        if (existingCategories.size() % 4 != 0)
-            System.out.println();
+        panel.add(new JLabel("交易類型:"));
+        panel.add(typeCombo);
+        panel.add(new JLabel("選擇類別:"));
+        panel.add(catCombo);
+        panel.add(new JLabel("金額:"));
+        panel.add(amtField);
 
-        System.out.println("[0] 輸入新類別");
-        System.out.println("----------------");
+        int result = JOptionPane.showConfirmDialog(this, panel, "新增財務紀錄", JOptionPane.OK_CANCEL_OPTION);
 
-        while (true) {
-            System.out.print("請選擇編號或輸入 0: ");
+        if (result == JOptionPane.OK_OPTION) {
+            String cat = (String) catCombo.getSelectedItem();
+            // 如果選到「輸入新類別...」，彈出視窗詢問名稱
+            if (cat.equals("輸入新類別...")) {
+                cat = JOptionPane.showInputDialog("請輸入新類別名稱:");
+            }
+
             try {
-                int choice = Integer.parseInt(scanner.nextLine());
-                if (choice > 0 && choice <= existingCategories.size()) {
-                    return existingCategories.get(choice - 1);
-                } else if (choice == 0) {
-                    return getNonEmptyInput("請輸入新類別名稱: ");
-                }
+                double amt = Double.parseDouble(amtField.getText());
+                String type = (String) typeCombo.getSelectedItem();
+                // 調用原本的 Service 與 Transaction 模型
+                service.addTransaction(new Transaction(cat, amt, type, LocalDate.now().toString()));
+                refreshTable();
+                updateStatus();
             } catch (NumberFormatException e) {
-                System.out.println("❌ 錯誤：請輸入有效的數字。");
+                JOptionPane.showMessageDialog(this, "請輸入有效的數字金額！");
             }
         }
     }
